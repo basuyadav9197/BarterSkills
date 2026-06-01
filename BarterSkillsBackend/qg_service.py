@@ -7,6 +7,18 @@ app = FastAPI(title="Question‑Generation Service")
 class QGRequest(BaseModel):
     summary: str
 
+print("🚀 Starting QG service")
+
+MODEL_ID = "valhalla/t5-small-qg-prepend"
+
+print("📥 Loading tokenizer")
+tokenizer = T5Tokenizer.from_pretrained(MODEL_ID)
+
+print("📥 Loading model")
+model = T5ForConditionalGeneration.from_pretrained(MODEL_ID)
+
+print("✅ Model loaded")
+
 MODEL_ID = "valhalla/t5-small-qg-prepend"
 tokenizer = None
 model = None
