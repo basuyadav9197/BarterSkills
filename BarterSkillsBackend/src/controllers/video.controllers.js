@@ -10,7 +10,7 @@ import ffmpegPath from "ffmpeg-static";
 import ffprobeStatic from "ffprobe-static";
 import path from "path";
 import { runLocalAI } from "../utils/runLocalAI.js";
-import { fetchQuestions } from "../utils/hfQG.js";
+// import { fetchQuestions } from "../utils/hfQG.js";
 import { User } from "../models/user.model.js";
 import { Like } from "../models/like.model.js";
 import { View  } from "../models/view.model.js"; 
@@ -111,22 +111,76 @@ export const getSingleVideo = asyncHandler(async (req, res) => {
 
 
 
- const processVideoAI = asyncHandler(async (req, res) => {
+//  const processVideoAI = asyncHandler(async (req, res) => {
+//   const { videoId } = req.params;
+//   const video = await Video.findById(videoId);
+//   if (!video) throw new ApiError(404, "Video not found");
+
+//   // 1) run whisper + summarizer
+//   const tempPath = `public/temp/${videoId}.mp4`;
+//   const { transcript, summary } = await runLocalAI(video.videoFile, tempPath);
+
+//   // 2) questions
+//   const rawQs = await fetchQuestions(summary);
+//     const questions = Array.isArray(rawQs)
+//       ? rawQs.filter(Boolean).map((question) => ({ question }))
+//       : [];
+
+//     const updatedVideo = await Video.findByIdAndUpdate(
+//       videoId,
+//       {
+//         $set: {
+//           transcript,
+//           summary,
+//           questions,
+//         },
+//       },
+//       { new: true }
+//     );
+
+//     if (!updatedVideo) {
+//       throw new ApiError(404, "Video not found while saving AI content");
+//     }
+
+//   // 3) return the full updated video under `data`
+//   return res.status(200).json({
+//     success: true,
+//     message: "AI content generated",
+//       data: updatedVideo,
+//   });
+// });
+
+//groq version 
+const processVideoAI = asyncHandler(async (req, res) => {
+
   const { videoId } = req.params;
-  const video = await Video.findById(videoId);
-  if (!video) throw new ApiError(404, "Video not found");
 
-  // 1) run whisper + summarizer
-  const tempPath = `public/temp/${videoId}.mp4`;
-  const { transcript, summary } = await runLocalAI(video.videoFile, tempPath);
+  const video =
+    await Video.findById(videoId);
 
-  // 2) questions
-  const rawQs = await fetchQuestions(summary);
-    const questions = Array.isArray(rawQs)
-      ? rawQs.filter(Boolean).map((question) => ({ question }))
-      : [];
+  if (!video) {
+    throw new ApiError(
+      404,
+      "Video not found"
+    );
+  }
 
-    const updatedVideo = await Video.findByIdAndUpdate(
+  const tempPath =
+    `public/temp/${videoId}.mp4`;
+
+  // GROQ AI PIPELINE
+  const {
+    transcript,
+    summary,
+    questions,
+  } = await runLocalAI(
+    video.videoFile,
+    tempPath
+  );
+
+  // SAVE AI DATA
+  const updatedVideo =
+    await Video.findByIdAndUpdate(
       videoId,
       {
         $set: {
@@ -138,15 +192,11 @@ export const getSingleVideo = asyncHandler(async (req, res) => {
       { new: true }
     );
 
-    if (!updatedVideo) {
-      throw new ApiError(404, "Video not found while saving AI content");
-    }
-
-  // 3) return the full updated video under `data`
   return res.status(200).json({
     success: true,
-    message: "AI content generated",
-      data: updatedVideo,
+    message:
+      "AI content generated",
+    data: updatedVideo,
   });
 });
 
